@@ -102,6 +102,7 @@ app.post('/api/mcp/connect', async (req, res) => {
       resources: resourcesResult.resources
     })
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       success: false,
       error: error.message

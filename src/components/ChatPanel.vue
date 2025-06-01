@@ -2,12 +2,12 @@
   <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200 h-[70vh] flex flex-col">
     <div class="flex justify-between items-center mb-5 pb-2.5 border-b border-gray-200">
       <h2 class="text-xl font-semibold text-gray-800">Claude Chat with MCP Tools</h2>
-      <button @click="clearChat" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
+      <button @click="clearChat" class="px-4 py-2 bg-slate-200 hover:bg-slate-400 rounded text-slate-700 hover:text-white transition-colors">
         Clear Chat
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto overflow-x-hidden py-2.5 border border-gray-300 rounded bg-gray-50" ref="messagesContainer">
+    <div class="flex-1 gap-2 overflow-y-auto overflow-x-hidden py-2.5 border border-gray-300 rounded bg-gray-50" ref="messagesContainer">
       <div v-if="chatStore.messages.length === 0" class="text-center text-gray-500 py-10 px-5 italic">
         Start a conversation with Claude. Your MCP tools will be available automatically.
       </div>
@@ -16,9 +16,9 @@
         v-for="message in chatStore.messages" 
         :key="message.id"
         :class="[
-          'mx-2.5 p-4 rounded-lg max-w-[80%] break-words',
+          'mx-2.5 p-4 rounded-lg max-w-[80%] break-words mb-2',
           message.role === 'user' 
-            ? 'bg-blue-600 text-white ml-auto mr-2.5'
+            ? 'bg-blue-100 border border-blue-300 text-black ml-auto mr-2.5'
             : 'bg-white border border-gray-300 mr-auto ml-2.5'
         ]"
       >
