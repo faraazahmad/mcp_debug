@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container p-4">
     <header>
       <h1>MCP Debug Client</h1>
       <p>Debug and test your Model Context Protocol server</p>
