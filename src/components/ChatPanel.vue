@@ -1,15 +1,15 @@
 <template>
-  <div class="p-6 bg-white rounded-lg shadow-sm border border-gray-200 h-[70vh] flex flex-col">
+  <div class="p-6 bg-white rounded-lg shadow border border-gray-200 max-h-[80vh] flex flex-col">
     <div class="flex justify-between items-center mb-5 pb-2.5 border-b border-gray-200">
-      <h2 class="text-xl font-semibold text-gray-800">Claude Chat with MCP Tools</h2>
-      <button @click="clearChat" class="px-4 py-2 bg-slate-200 hover:bg-slate-400 rounded text-slate-700 hover:text-white transition-colors">
+      <h2 class="text-2xl text-gray-800">Claude Chat with MCP Tools</h2>
+      <button @click="clearChat" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 border border-rose-400 rounded text-rose-700 transition-colors">
         Clear Chat
       </button>
     </div>
 
     <div class="flex-1 gap-2 overflow-y-auto overflow-x-hidden py-2.5 border border-gray-300 rounded bg-gray-50" ref="messagesContainer">
       <div v-if="chatStore.messages.length === 0" class="text-center text-gray-500 py-10 px-5 italic">
-        Start a conversation with Claude. Your MCP tools will be available automatically.
+        Start a conversation with Claude. Your MCP tools will be available automatically when connected.
       </div>
       
       <div 
@@ -37,7 +37,7 @@
           <div 
             v-for="(tool, index) in message.tools" 
             :key="index"
-            class="bg-gray-50 p-2.5 rounded mb-2.5"
+            class="rounded mb-2.5 font-mono"
           >
             <strong class="block mb-1 text-blue-600">{{ tool.name }}</strong>
             <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full">{{ JSON.stringify(tool.arguments, null, 2) }}</pre>
@@ -79,7 +79,7 @@
         
         <button 
           @click="sendMessage"
-          class="px-5 py-2.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors h-fit"
+          class="px-5 py-2.5 bg-blue-100 border border-blue-400 text-blue-700 rounded hover:bg-blue-200 transition-colors h-fit"
         >
           Send
         </button>
