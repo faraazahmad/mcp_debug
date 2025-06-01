@@ -39,7 +39,7 @@
         <h3>{{ selectedResource.uri }}</h3>
         
         <div v-if="resourceContent" class="resource-content">
-          <pre>{{ resourceContent }}</pre>
+          <pre><code class="language-json" v-html="highlightCode(resourceContent)"></code></pre>
         </div>
 
         <div v-if="resourceError" class="error">
@@ -58,8 +58,10 @@
 import { ref } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { readResource } from '../services/mcpClient'
+import { useHighlight } from '../composables/useHighlight'
 
 const mcpStore = useMcpStore()
+const { highlightCode } = useHighlight()
 
 const selectedResource = ref<{ uri: string } | null>(null)
 const resourceContent = ref<string | null>(null)

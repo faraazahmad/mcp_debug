@@ -40,10 +40,10 @@
             class="rounded mb-2.5 font-mono"
           >
             <strong class="block mb-1 text-blue-600">{{ tool.name }}</strong>
-            <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full">{{ JSON.stringify(tool.arguments, null, 2) }}</pre>
+            <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full"><code class="language-json" v-html="highlightCode(JSON.stringify(tool.arguments, null, 2))"></code></pre>
             <div v-if="tool.result" class="mt-2.5 pt-2.5 border-t border-gray-300">
               <strong class="block mb-1 text-blue-600">Result:</strong>
-              <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full">{{ JSON.stringify(tool.result, null, 2) }}</pre>
+              <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full"><code class="language-json" v-html="highlightCode(JSON.stringify(tool.result, null, 2))"></code></pre>
             </div>
           </div>
         </div>
@@ -93,9 +93,11 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import { useChatStore } from '../stores/chat'
 import { useMcpStore } from '../stores/mcp'
 import { sendChatMessage } from '../services/chatService'
+import { useHighlight } from '../composables/useHighlight'
 
 const chatStore = useChatStore()
 const mcpStore = useMcpStore()
+const { highlightCode } = useHighlight()
 
 const newMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
