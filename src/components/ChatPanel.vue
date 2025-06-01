@@ -1,80 +1,85 @@
 <template>
-  <div class="card chat-panel">
-    <div class="chat-header">
-      <h2>Claude Chat with MCP Tools</h2>
-      <button @click="clearChat" class="button" style="background: #dc3545;">
+  <div class="p-6 bg-white rounded-lg shadow border border-gray-200 max-h-[80vh] flex flex-col">
+    <div class="flex justify-between items-center mb-5 pb-2.5 border-b border-gray-200">
+      <h2 class="text-2xl text-gray-800">Claude Chat with MCP Tools</h2>
+      <button @click="clearChat" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 border border-rose-400 rounded text-rose-700 transition-colors">
         Clear Chat
       </button>
     </div>
 
-    <div class="chat-messages" ref="messagesContainer">
-      <div v-if="chatStore.messages.length === 0" class="empty-state">
-        Start a conversation with Claude. Your MCP tools will be available automatically.
+    <div class="flex-1 gap-2 overflow-y-auto overflow-x-hidden py-2.5 border border-gray-300 rounded bg-gray-50" ref="messagesContainer">
+      <div v-if="chatStore.messages.length === 0" class="text-center text-gray-500 py-10 px-5 italic">
+        Start a conversation with Claude. Your MCP tools will be available automatically when connected.
       </div>
       
       <div 
         v-for="message in chatStore.messages" 
         :key="message.id"
-        :class="['message', message.role]"
+        :class="[
+          'mx-2.5 p-4 rounded-lg max-w-[80%] break-words mb-2',
+          message.role === 'user' 
+            ? 'bg-blue-100 border border-blue-300 text-black ml-auto mr-2.5'
+            : 'bg-white border border-gray-300 mr-auto ml-2.5'
+        ]"
       >
-        <div class="message-header">
-          <span class="role">{{ message.role === 'user' ? 'You' : 'Claude' }}</span>
-          <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+        <div class="flex justify-between items-center mb-2 text-xs opacity-80">
+          <span class="font-semibold">{{ message.role === 'user' ? 'You' : 'Claude' }}</span>
+          <span class="text-[11px]">{{ formatTime(message.timestamp) }}</span>
         </div>
         
-        <div class="message-content">
-          <pre v-if="message.role === 'assistant'">{{ message.content }}</pre>
-          <p v-else>{{ message.content }}</p>
+        <div>
+          <pre v-if="message.role === 'assistant'" class="m-0 whitespace-pre-wrap break-words max-w-full font-inherit">{{ message.content }}</pre>
+          <p v-else class="m-0">{{ message.content }}</p>
         </div>
 
-        <div v-if="message.tools && message.tools.length > 0" class="tool-calls">
-          <h4>Tool Calls:</h4>
+        <div v-if="message.tools && message.tools.length > 0" class="mt-4 pt-4 border-t border-gray-200">
+          <h4 class="m-0 mb-2.5 text-gray-500 text-sm">Tool Calls:</h4>
           <div 
             v-for="(tool, index) in message.tools" 
             :key="index"
-            class="tool-call"
+            class="rounded mb-2.5 font-mono"
           >
-            <strong>{{ tool.name }}</strong>
-            <pre>{{ JSON.stringify(tool.arguments, null, 2) }}</pre>
-            <div v-if="tool.result" class="tool-result">
-              <strong>Result:</strong>
-              <pre>{{ JSON.stringify(tool.result, null, 2) }}</pre>
+            <strong class="block mb-1 text-blue-600">{{ tool.name }}</strong>
+            <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full"><code class="language-json" v-html="highlightCode(JSON.stringify(tool.arguments, null, 2))"></code></pre>
+            <div v-if="tool.result" class="mt-2.5 pt-2.5 border-t border-gray-300">
+              <strong class="block mb-1 text-blue-600">Result:</strong>
+              <pre class="my-1 text-xs bg-gray-200 p-2 rounded whitespace-pre-wrap break-words max-w-full"><code class="language-json" v-html="highlightCode(JSON.stringify(tool.result, null, 2))"></code></pre>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="chatStore.isLoading" class="message assistant loading">
-        <div class="message-header">
-          <span class="role">Claude</span>
+      <div v-if="chatStore.isLoading" class="mx-2.5 p-4 rounded-lg max-w-[80%] break-words bg-gray-100 mr-auto ml-2.5">
+        <div class="flex justify-between items-center mb-2 text-xs opacity-80">
+          <span class="font-semibold">Claude</span>
         </div>
-        <div class="message-content">
-          <div class="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
+        <div>
+          <div class="flex gap-1 items-center">
+            <span class="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style="animation-delay: -0.32s;"></span>
+            <span class="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style="animation-delay: -0.16s;"></span>
+            <span class="w-2 h-2 rounded-full bg-blue-600 animate-bounce"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="chat-input">
-      <div v-if="chatStore.error" class="error">
+    <div class="mt-5">
+      <div v-if="chatStore.error" class="mb-2 p-2 bg-red-100 text-red-700 rounded">
         {{ chatStore.error }}
       </div>
       
-      <div class="input-group">
+      <div class="flex gap-2.5 items-end">
         <textarea 
           v-model="newMessage"
           @keydown="handleKeyDown"
-          class="textarea"
+          class="flex-1 resize-none p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Type your message... (Shift+Enter for new line, Enter to send)"
           rows="3"
         ></textarea>
         
         <button 
           @click="sendMessage"
-          class="button send-button"
+          class="px-5 py-2.5 bg-blue-100 border border-blue-400 text-blue-700 rounded hover:bg-blue-200 transition-colors h-fit"
         >
           Send
         </button>
@@ -88,9 +93,11 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import { useChatStore } from '../stores/chat'
 import { useMcpStore } from '../stores/mcp'
 import { sendChatMessage } from '../services/chatService'
+import { useHighlight } from '../composables/useHighlight'
 
 const chatStore = useChatStore()
 const mcpStore = useMcpStore()
+const { highlightCode } = useHighlight()
 
 const newMessage = ref('')
 const messagesContainer = ref<HTMLElement>()
@@ -151,178 +158,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.chat-panel {
-  height: 70vh;
-  display: flex;
-  flex-direction: column;
-}
 
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fafafa;
-}
-
-.empty-state {
-  text-align: center;
-  color: #6c757d;
-  padding: 40px 20px;
-  font-style: italic;
-}
-
-.message {
-  margin: 10px;
-  padding: 15px;
-  border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.message.user {
-  background: #007bff;
-  color: white;
-  margin-left: auto;
-  margin-right: 10px;
-}
-
-.message.assistant {
-  background: white;
-  border: 1px solid #ddd;
-  margin-right: auto;
-  margin-left: 10px;
-}
-
-.message.loading {
-  background: #f8f9fa;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.role {
-  font-weight: 600;
-}
-
-.timestamp {
-  font-size: 11px;
-}
-
-.message-content pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  font-family: inherit;
-  max-width: 100%;
-}
-
-.message-content p {
-  margin: 0;
-}
-
-.tool-calls {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
-}
-
-.tool-calls h4 {
-  margin: 0 0 10px 0;
-  color: #6c757d;
-  font-size: 14px;
-}
-
-.tool-call {
-  background: #f8f9fa;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.tool-call strong {
-  display: block;
-  margin-bottom: 5px;
-  color: #007bff;
-}
-
-.tool-call pre {
-  margin: 5px 0;
-  font-size: 12px;
-  background: #e9ecef;
-  padding: 8px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  max-width: 100%;
-}
-
-.tool-result {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #dee2e6;
-}
-
-.loading-dots {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.loading-dots span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #007bff;
-  animation: loading 1.4s infinite ease-in-out;
-}
-
-.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-
-@keyframes loading {
-  0%, 80%, 100% { opacity: 0.3; }
-  40% { opacity: 1; }
-}
-
-.chat-input {
-  margin-top: 20px;
-}
-
-.input-group {
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
-}
-
-.input-group .textarea {
-  flex: 1;
-  resize: none;
-}
-
-.send-button {
-  padding: 10px 20px;
-  height: fit-content;
-}
-</style>

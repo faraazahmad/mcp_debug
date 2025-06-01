@@ -1,25 +1,18 @@
 <template>
-  <div class="container">
+  <div class="container p-4 flex flex-col gap-4">
     <header>
-      <h1>MCP Debug Client</h1>
+      <h1 class="text-3xl">MCP Debug Client</h1>
       <p>Debug and test your Model Context Protocol server</p>
     </header>
 
-    <div class="grid grid-2">
-      <!-- Left Column: Settings and Tools -->
-      <div>
-        <SettingsPanel />
-        
-        <div v-if="mcpStore.isConnected" class="grid">
-          <ToolsPanel />
-          <ResourcesPanel />
-        </div>
-      </div>
+    <div class="grid grid-cols-2 gap-4">
+      <SettingsPanel />
+      <ChatPanel />
+    </div>
 
-      <!-- Right Column: Chat -->
-      <div>
-        <ChatPanel />
-      </div>
+    <div v-if="mcpStore.isConnected" class="grid grid-rows-2">
+      <ToolsPanel />
+      <ResourcesPanel />
     </div>
 
     <!-- Development Mode Toggle -->
@@ -77,7 +70,6 @@ onMounted(() => {
 
 <style>
 header {
-  text-align: center;
   margin-bottom: 30px;
   padding: 20px 0;
   border-bottom: 2px solid #eee;

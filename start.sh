@@ -20,17 +20,9 @@ fi
 echo "📦 Installing bridge server dependencies..."
 npm install express cors @modelcontextprotocol/sdk
 
-# Build the parent MCP server if needed
-if [ ! -f "../../build/mcp.js" ]; then
-    echo "🔨 Building MCP server..."
-    cd ../..
-    npx tsc --outDir build
-    cd src/mcp_client
-fi
-
 echo ""
 echo "🌉 Starting MCP Bridge Server (port 3002)..."
-node bridge-server.js &
+node ./bridge-server.js &
 BRIDGE_PID=$!
 
 # Wait a moment for bridge server to start
@@ -42,7 +34,7 @@ echo ""
 echo "Features available:"
 echo "  • Configure MCP server settings"
 echo "  • Test MCP tools (similar_functions, function_callers, etc.)"
-echo "  • Browse MCP resources"  
+echo "  • Browse MCP resources"
 echo "  • Chat with Claude using MCP tools"
 echo "  • Development mode with mock data"
 echo ""

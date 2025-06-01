@@ -16,12 +16,12 @@
         :key="tool.name"
         class="tool-card"
       >
-        <h3>{{ tool.name }}</h3>
+        <h3 class="text-xl font-mono">{{ tool.name }}</h3>
         <p v-if="tool.description">{{ tool.description }}</p>
         
         <details>
           <summary>Schema</summary>
-          <pre>{{ JSON.stringify(tool.inputSchema, null, 2) }}</pre>
+          <pre><code class="language-json" v-html="highlightCode(JSON.stringify(tool.inputSchema, null, 2))"></code></pre>
         </details>
         
         <button 
@@ -60,7 +60,7 @@
 
         <div v-if="toolResult" class="tool-result">
           <h4>Result:</h4>
-          <pre>{{ JSON.stringify(toolResult, null, 2) }}</pre>
+          <pre><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
         </div>
 
         <div v-if="toolError" class="error">
@@ -76,8 +76,10 @@ import { ref } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { callTool } from '../services/mcpClient'
 import type { McpTool } from '../types'
+import { useHighlight } from '../composables/useHighlight'
 
 const mcpStore = useMcpStore()
+const { highlightCode } = useHighlight()
 
 const selectedTool = ref<McpTool | null>(null)
 const toolArgs = ref('')

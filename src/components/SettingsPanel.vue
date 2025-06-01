@@ -1,38 +1,51 @@
 <template>
-  <div class="card">
-    <h2>MCP Server Settings</h2>
+  <div class="bg-white rounded-lg shadow p-6 flex flex-col gap-4 justify-between">
+    <div class="flex flex-row justify-between items-center gap-4">
+      <h2 class="text-2xl text-gray-800">MCP Server Settings</h2>
+      <button 
+        @click="saveSettings" 
+        class="bg-slate-100 hover:bg-slate-200 border border-slate-400 disabled:bg-gray-400 disabled:cursor-not-allowed text-slate-700 px-6 py-2 rounded-md transition-colors"
+        :disabled="!isValid"
+      >
+        Save
+      </button>
+    </div>
     
-    <div class="form-group">
-      <label>Server Command:</label>
+    <div class="">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Server Command:</label>
       <input 
         v-model="localSettings.serverCommand" 
-        class="input" 
+        class="font-mono w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
         placeholder="node"
       />
     </div>
 
-    <div class="form-group">
-      <label>Server Arguments (comma-separated):</label>
+    <div class="">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Server Arguments (comma-separated):</label>
       <input 
         v-model="serverArgsString" 
-        class="input" 
+        class="font-mono w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
         placeholder="../../build/mcp.js"
       />
     </div>
 
-    <div class="form-group">
-      <label>Environment variables</label>
-      <div class="env-vars-container">
-        <div class="env-var-row" v-for="(key, index) in envVarKeys" :key="index">
+    <div class="flex-1">
+      <div class="flex flex-row justify-between gap-4 items-center mb-4">
+        <a class="font-medium text-gray-700">Environment variables</a>
+        <button class="bg-slate-100 hover:bg-slate-200 border border-slate-400 disabled:bg-gray-400 disabled:cursor-not-allowed text-slate-700 px-6 py-2 rounded-md transition-colors" @click="addEnvVar" type="button">+ Add</button>
+        
+      </div>
+      <div class="border border-gray-300 rounded-md p-4 bg-gray-50 max-h-70 overflow-y-auto">
+        <div class="flex flex-col md:flex-row gap-2 mb-2 items-center" v-for="(key, index) in envVarKeys" :key="index">
           <input
-            class="input-var-key"
+            class="font-mono flex-1 min-w-0 md:min-w-[150px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             type="text"
             v-model="envVarKeys[index]"
             placeholder="Variable name"
             @input="updateEnvVarKey(index, $event.target.value)"
           >
           <input
-            class="input-var-value"
+            class="flex-2 min-w-0 md:min-w-[200px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             type="password"
             v-model="localSettings.environmentVariables[key]"
             placeholder="Variable value"
@@ -40,53 +53,47 @@
           <button
             @click="removeEnvVar(index)"
             type="button"
-            class="delete-button"
-          >x</button>
+            class="hover:bg-red-100 text-red-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition-colors"
+          >×</button>
         </div>
-        <button class="button add-button" @click="addEnvVar" type="button">+ Add Env var</button>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>Anthropic API Key:</label>
+    <div class="">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Anthropic API Key:</label>
       <input 
         v-model="localSettings.anthropicApiKey" 
         type="password" 
-        class="input" 
+        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
         placeholder="sk-ant-..."
       />
     </div>
 
-    <div class="form-group">
-      <button 
-        @click="saveSettings" 
-        class="button"
-        :disabled="!isValid"
-      >
-        Save Settings
-      </button>
-      
+    <div class="flex flex-row gap-2 w-full">
+      <div v-if="mcpStore.error" class="flex-1 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+        {{ mcpStore.error }}.
+      </div>
+      <div v-else-if="mcpStore.isConnecting" class="flex-1 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+        Connecting to MCP server...
+      </div>
+      <div v-else-if="mcpStore.serverInfo" class="flex-1 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+        Connected to {{ mcpStore.serverInfo.name }} v{{ mcpStore.serverInfo.version }}.
+      </div>
+      <div v-else-if="!mcpStore.isConnected" class="flex-1 bg-slate-100 border border-slate-400 text-slate-700 px-4 py-3 rounded">
+        No connection to MCP Server.
+      </div>
+
       <button 
         @click="connectToServer" 
-        class="button"
+        :class="mcpStore.isConnected 
+          ? 'bg-red-100 hover:bg-red-200 disabled:bg-black disabled:text-white disabled:border-black disabled:cursor-not-allowed text-red-700 border border-red-400 px-6 py-2 rounded-md transition-colors'
+          : 'bg-green-100 hover:bg-green-200 disabled:bg-black disabled:text-white disabled:border-black disabled:cursor-not-allowed text-green-700 border border-green-400 px-6 py-2 rounded-md transition-colors'"
         :disabled="!canConnect"
-        style="margin-left: 10px;"
       >
-        {{ mcpStore.isConnected ? 'Disconnect' : 'Connect to MCP Server' }}
+        {{ mcpStore.isConnected ? 'Disconnect' : 'Connect' }}
       </button>
     </div>
 
-    <div v-if="mcpStore.error" class="error">
-      {{ mcpStore.error }}
-    </div>
-
-    <div v-if="mcpStore.isConnecting" class="success">
-      Connecting to MCP server...
-    </div>
-
-    <div v-if="mcpStore.serverInfo" class="success">
-      Connected to {{ mcpStore.serverInfo.name }} v{{ mcpStore.serverInfo.version }}
-    </div>
   </div>
 </template>
 
@@ -187,68 +194,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.env-vars-container {
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 15px;
-  background: #f9f9f9;
-}
 
-.env-var-row {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
-  align-items: center;
-}
-
-.env-var-key {
-  flex: 1;
-  min-width: 150px;
-}
-
-.env-var-value {
-  flex: 2;
-  min-width: 200px;
-}
-
-.delete-button {
-  background: #dc3545;
-  color: white;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.delete-button:hover {
-  background: #c82333;
-}
-
-.add-button {
-  background: #28a745;
-  margin-top: 10px;
-}
-
-.add-button:hover {
-  background: #218838;
-}
-
-@media (max-width: 768px) {
-  .env-var-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .env-var-key,
-  .env-var-value {
-    min-width: auto;
-  }
-}
-</style>
