@@ -2,6 +2,8 @@
 
 A Vue.js-based debug client for testing Model Context Protocol (MCP) servers.
 
+![image](https://github.com/user-attachments/assets/2313759c-e06d-4ed7-9b80-83445ce878e5)
+
 ## Features
 
 - **Settings Panel**: Configure MCP server connection and Anthropic API key
@@ -22,7 +24,6 @@ This will:
 - Install all dependencies
 - Start the MCP bridge server (port 3002)
 - Start the Vue.js client (port 3001)
-- Build the MCP server if needed
 
 ### Option 2: Manual Setup
 
