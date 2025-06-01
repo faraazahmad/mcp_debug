@@ -16,7 +16,7 @@
         :key="tool.name"
         class="tool-card"
       >
-        <h3>{{ tool.name }}</h3>
+        <h3 class="text-xl font-mono">{{ tool.name }}</h3>
         <p v-if="tool.description">{{ tool.description }}</p>
         
         <details>
