@@ -49,12 +49,7 @@ Toggle "Use mock data" to test the interface without connecting to an actual MCP
 
 ## MCP Server Integration
 
-This client is designed to work with the Code Graph RAG MCP server in `src/mcp.ts`, which provides:
-
-- `similar_functions`: Search for functions by description
-- `function_callers`: Find functions that call a specific function  
-- `function_callees`: Find functions called by a specific function
-- `function_details`: Get detailed information about a function
+This client is designed to work with any MCP server. You can just provide the command and env vars to run it.
 
 ## Architecture
 
