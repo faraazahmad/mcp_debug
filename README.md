@@ -76,15 +76,6 @@ Toggle "Use mock data" to test the interface without connecting to an actual MCP
 4. **Browse Resources**: Load and inspect available resources
 5. **Chat with Claude**: Use the chat interface to interact with Claude using your MCP tools
 
-### Environment Variables
-Common environment variables you might need for the Code Graph RAG server:
-- `DATABASE_URL`: PostgreSQL connection string
-- `NEO4J_URI`: Neo4j database URI  
-- `NEO4J_USER`: Neo4j username
-- `NEO4J_PASSWORD`: Neo4j password
-- `PINECONE_API_KEY`: Pinecone API key
-- `OPENAI_API_KEY`: OpenAI API key
-
 ## MCP Server Integration
 
 This client is designed to work with the Code Graph RAG MCP server in `src/mcp.ts`, which provides:
