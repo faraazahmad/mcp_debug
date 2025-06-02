@@ -16,9 +16,8 @@ A Vue.js-based debug client for testing Model Context Protocol (MCP) servers.
 
 ## Setup
 
-### Option 1: Quick Start (Recommended)
+### Quick Start (Recommended)
 ```bash
-cd src/mcp_client
 ./start.sh
 ```
 
@@ -27,37 +26,7 @@ This will:
 - Start the MCP bridge server (port 3002)
 - Start the Vue.js client (port 3001)
 
-### Option 2: Manual Setup
-
-1. Install client dependencies:
-   ```bash
-   cd src/mcp_client
-   npm install
-   ```
-
-2. Install bridge server dependencies:
-   ```bash
-   npm install express cors @modelcontextprotocol/sdk
-   ```
-
-3. Build the MCP server:
-   ```bash
-   cd ../..
-   npx tsc --outDir build
-   cd src/mcp_client
-   ```
-
-4. Start the bridge server:
-   ```bash
-   node bridge-server.js
-   ```
-
-5. In a new terminal, start the client:
-   ```bash
-   npm run dev
-   ```
-
-6. Open http://localhost:3001 in your browser
+Open http://localhost:3001 in your browser
 
 ## Configuration
 
