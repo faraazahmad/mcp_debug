@@ -3,7 +3,8 @@
 A Vue.js-based debug client for testing Model Context Protocol (MCP) servers.
 
 ![image](https://github.com/user-attachments/assets/2313759c-e06d-4ed7-9b80-83445ce878e5)
-![image](https://github.com/user-attachments/assets/66df9f8f-0fd2-4425-8151-d90c2233c627)
+![image](https://github.com/user-attachments/assets/564d6176-6564-417b-818d-4175045b3296)
+
 
 
 ## Features
