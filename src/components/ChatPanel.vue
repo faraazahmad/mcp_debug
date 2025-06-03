@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 bg-white rounded-lg shadow border border-gray-200 max-h-[80vh] flex flex-col">
+  <div class="p-6 bg-white h-full flex flex-col">
     <div class="flex justify-between items-center mb-5 pb-2.5 border-b border-gray-200">
       <h2 class="text-2xl text-gray-800">Claude Chat with MCP Tools</h2>
       <button @click="clearChat" class="px-4 py-2 bg-rose-100 hover:bg-rose-200 border border-rose-400 rounded text-rose-700 transition-colors">

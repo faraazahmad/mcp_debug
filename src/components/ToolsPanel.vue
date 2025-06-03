@@ -10,7 +10,7 @@
       Connect to MCP server to see available tools
     </div>
 
-    <div v-else class="flex border border-gray-300 rounded-lg overflow-hidden bg-white" style="height: calc(100vh - 120px);">
+    <div v-else class="flex overflow-hidden bg-white h-full">
       <!-- Column 1: Tools List -->
       <div class="flex flex-col border-r border-gray-300 w-75 min-w-60">
         <div class="flex justify-between items-center px-5 py-4 bg-gray-50 border-b border-gray-300 font-semibold">

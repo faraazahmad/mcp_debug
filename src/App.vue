@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="h-screen bg-gray-50 flex flex-col">
     <!-- Top Navbar -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
+      <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo/Title -->
           <div class="flex items-center">
@@ -64,7 +64,7 @@
             <div 
               v-if="showSettingsDropdown"
               @click.stop
-              class="absolute right-0 mt-2 w-96 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+              class="absolute right-0 mt-2 w-120 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
             >
               <div class="py-1">
                 <div class="px-4 py-3 border-b border-gray-100">
@@ -171,11 +171,11 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto p-6">
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="h-full bg-white flex flex-col">
         <!-- Tabs -->
-        <div class="border-b border-gray-200">
-          <nav class="-mb-px flex">
+        <div class="border-b border-gray-200 flex-shrink-0">
+          <nav class="-mb-px flex px-6">
             <button 
               @click="activeTab = 'chat'"
               :class="[
@@ -225,7 +225,7 @@
         </div>
         
         <!-- Tab Content -->
-        <div class="p-0">
+        <div class="flex-1 overflow-hidden">
           <ChatPanel v-if="activeTab === 'chat'" />
           <ToolsPanel v-if="activeTab === 'tools'" />
           <ResourcesPanel v-if="activeTab === 'resources'" />
