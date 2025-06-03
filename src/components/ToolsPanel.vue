@@ -53,7 +53,13 @@
               placeholder='{"parameter": "value"}'
             ></textarea>
             
-            <div class="mt-4">
+            <div class="mt-4 flex gap-3">
+              <button 
+                @click="generateRequestBody" 
+                class="bg-gray-500 text-white border-0 px-4 py-2.5 rounded-md font-semibold cursor-pointer transition-colors duration-200 hover:bg-gray-600"
+              >
+                Generate
+              </button>
               <button 
                 @click="executeTool" 
                 class="bg-blue-500 text-white border-0 px-6 py-2.5 rounded-md font-semibold cursor-pointer transition-colors duration-200 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
@@ -77,8 +83,7 @@
         </div>
         <div class="flex-1 p-5 overflow-y-auto">
           <div v-if="toolResult" class="h-full">
-            <div class="px-3 py-1.5 rounded text-xs font-semibold mb-4 inline-block bg-green-100 text-green-800 border border-green-200">200 OK</div>
-            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs overflow-auto" style="height: calc(100% - 50px);"><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
+            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs text-wrap overflow-y-auto h-full"><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
           </div>
 
           <div v-else-if="toolError" class="h-full">
@@ -122,6 +127,57 @@ function selectTool(tool: McpTool) {
   toolResult.value = null
   toolError.value = null
   responseTime.value = null
+}
+
+function generateRequestBody() {
+  if (!selectedTool.value?.inputSchema) return
+  
+  const schema = selectedTool.value.inputSchema
+  const example = generateExampleFromSchema(schema)
+  toolArgs.value = JSON.stringify(example, null, 2)
+}
+
+function generateExampleFromSchema(schema: any): any {
+  if (!schema || typeof schema !== 'object') return {}
+  
+  if (schema.type === 'object' && schema.properties) {
+    const example: any = {}
+    for (const [key, prop] of Object.entries(schema.properties as any)) {
+      example[key] = generateExampleFromProperty(prop)
+    }
+    return example
+  }
+  
+  return generateExampleFromProperty(schema)
+}
+
+function generateExampleFromProperty(prop: any): any {
+  if (!prop || typeof prop !== 'object') return ''
+  
+  switch (prop.type) {
+    case 'string':
+      return prop.example || prop.default || 'example'
+    case 'number':
+      return prop.example || prop.default || 42
+    case 'integer':
+      return prop.example || prop.default || 1
+    case 'boolean':
+      return prop.example !== undefined ? prop.example : (prop.default !== undefined ? prop.default : true)
+    case 'array':
+      const itemExample = prop.items ? generateExampleFromProperty(prop.items) : 'item'
+      return [itemExample]
+    case 'object':
+      if (prop.properties) {
+        const example: any = {}
+        for (const [key, subProp] of Object.entries(prop.properties)) {
+          example[key] = generateExampleFromProperty(subProp)
+        }
+        return example
+      }
+      return {}
+    default:
+      return prop.example || prop.default || ''
+  }
 }
 
 async function executeTool() {
