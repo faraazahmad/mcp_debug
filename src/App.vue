@@ -10,9 +10,26 @@
       <ChatPanel />
     </div>
 
-    <div v-if="mcpStore.isConnected" class="grid grid-rows-2">
-      <ToolsPanel />
-      <ResourcesPanel />
+    <div v-if="mcpStore.isConnected" class="tabs-container">
+      <div class="tabs">
+        <button 
+          :class="['tab', { active: activeTab === 'tools' }]"
+          @click="activeTab = 'tools'"
+        >
+          Tools
+        </button>
+        <button 
+          :class="['tab', { active: activeTab === 'resources' }]"
+          @click="activeTab = 'resources'"
+        >
+          Resources
+        </button>
+      </div>
+      
+      <div class="tab-content">
+        <ToolsPanel v-if="activeTab === 'tools'" />
+        <ResourcesPanel v-if="activeTab === 'resources'" />
+      </div>
     </div>
 
     <!-- Development Mode Toggle -->
@@ -44,6 +61,7 @@ import ChatPanel from './components/ChatPanel.vue'
 
 const mcpStore = useMcpStore()
 const isDevelopmentMode = ref(false)
+const activeTab = ref('tools')
 
 function toggleDevelopmentMode() {
   // Save preference
@@ -83,5 +101,41 @@ header h1 {
 header p {
   color: #6c757d;
   font-size: 16px;
+}
+
+.tabs-container {
+  margin-top: 20px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  color: #333;
+  background-color: #f5f5f5;
+}
+
+.tab.active {
+  color: #007acc;
+  border-bottom-color: #007acc;
+}
+
+.tab-content {
+  min-height: 300px;
 }
 </style>
