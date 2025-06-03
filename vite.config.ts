@@ -12,6 +12,6 @@ export default defineConfig({
     global: 'globalThis',
   },
   optimizeDeps: {
-    include: ['@anthropic-ai/sdk']
+    include: ['@anthropic-ai/sdk', 'monaco-editor']
   }
 })

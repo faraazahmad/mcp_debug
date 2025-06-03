@@ -47,11 +47,10 @@
 
           <div class="mb-6">
             <h4 class="m-0 mb-2.5 text-sm font-semibold text-gray-800 uppercase tracking-wide">Request Body</h4>
-            <textarea 
-              v-model="toolArgs" 
-              class="w-full min-h-30 p-4 border border-gray-300 rounded-md font-mono text-sm resize-y bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder='{"parameter": "value"}'
-            ></textarea>
+            <div 
+              ref="editorContainer" 
+              class="w-full h-40 border border-gray-300 rounded-md bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 monaco-editor-container"
+            ></div>
             
             <div class="mt-4 flex gap-3">
               <button 
@@ -105,11 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { callTool } from '../services/mcpClient'
 import type { McpTool } from '../types'
 import { useHighlight } from '../composables/useHighlight'
+import * as monaco from 'monaco-editor'
 
 const mcpStore = useMcpStore()
 const { highlightCode } = useHighlight()
@@ -120,6 +120,38 @@ const toolResult = ref<any>(null)
 const toolError = ref<string | null>(null)
 const isExecuting = ref(false)
 const responseTime = ref<number | null>(null)
+const editorContainer = ref<HTMLElement>()
+let editor: monaco.editor.IStandaloneCodeEditor | null = null
+
+async function initializeEditor() {
+  if (!editorContainer.value || editor) return
+  
+  await nextTick()
+  try {
+    editor = monaco.editor.create(editorContainer.value, {
+      value: '',
+      language: 'json',
+      theme: 'vs',
+      automaticLayout: true,
+      minimap: { enabled: false },
+      fontSize: 13,
+      lineNumbers: 'on',
+      wordWrap: 'on',
+      formatOnPaste: true,
+      formatOnType: true,
+      scrollBeyondLastLine: false,
+      fixedOverflowWidgets: true
+    })
+    
+    editor.onDidChangeModelContent(() => {
+      toolArgs.value = editor?.getValue() || ''
+    })
+    
+    console.log('Monaco editor initialized successfully')
+  } catch (error) {
+    console.error('Failed to initialize Monaco editor:', error)
+  }
+}
 
 function selectTool(tool: McpTool) {
   selectedTool.value = tool
@@ -127,14 +159,29 @@ function selectTool(tool: McpTool) {
   toolResult.value = null
   toolError.value = null
   responseTime.value = null
+  if (editor) {
+    editor.setValue('')
+  }
 }
+
+// Watch for when a tool is selected and initialize editor
+watch(selectedTool, async (newTool) => {
+  if (newTool && !editor) {
+    await nextTick()
+    await initializeEditor()
+  }
+})
 
 function generateRequestBody() {
   if (!selectedTool.value?.inputSchema) return
   
   const schema = selectedTool.value.inputSchema
   const example = generateExampleFromSchema(schema)
-  toolArgs.value = JSON.stringify(example, null, 2)
+  const formattedJson = JSON.stringify(example, null, 2)
+  toolArgs.value = formattedJson
+  if (editor) {
+    editor.setValue(formattedJson)
+  }
 }
 
 function generateExampleFromSchema(schema: any): any {
@@ -191,7 +238,8 @@ async function executeTool() {
   const startTime = performance.now()
   
   try {
-    const args = toolArgs.value.trim() ? JSON.parse(toolArgs.value) : {}
+    const editorValue = editor?.getValue() || toolArgs.value
+    const args = editorValue.trim() ? JSON.parse(editorValue) : {}
     const isDevelopmentMode = localStorage.getItem('mcpDevelopmentMode') === 'true'
     
     const result = isDevelopmentMode 
@@ -206,6 +254,14 @@ async function executeTool() {
     isExecuting.value = false
   }
 }
+
+onMounted(() => {
+  // Editor will be initialized when a tool is selected
+})
+
+onUnmounted(() => {
+  editor?.dispose()
+})
 
 // Mock function for development mode (if not already defined)
 async function callToolMock(toolName: string, args: any) {
@@ -228,5 +284,14 @@ async function callToolMock(toolName: string, args: any) {
 
 .min-h-30 {
   min-height: 120px;
+}
+
+.monaco-editor-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.monaco-editor-container :deep(.monaco-editor) {
+  height: 100% !important;
 }
 </style>
