@@ -1,70 +1,100 @@
 <template>
-  <div class="card">
-    <h2>Available Tools</h2>
+  <div class="h-full flex flex-col">
+    <h2 class="m-0 mb-5 px-5 text-2xl text-gray-800">MCP Tools Explorer</h2>
     
-    <div v-if="!mcpStore.hasTools && mcpStore.isConnected">
+    <div v-if="!mcpStore.hasTools && mcpStore.isConnected" class="text-center py-10 text-gray-600 text-base">
       No tools available
     </div>
     
-    <div v-else-if="!mcpStore.isConnected">
+    <div v-else-if="!mcpStore.isConnected" class="text-center py-10 text-gray-600 text-base">
       Connect to MCP server to see available tools
     </div>
 
-    <div v-else class="tools-grid">
-      <div 
-        v-for="tool in mcpStore.tools" 
-        :key="tool.name"
-        class="tool-card"
-      >
-        <h3 class="text-xl font-mono">{{ tool.name }}</h3>
-        <p v-if="tool.description">{{ tool.description }}</p>
-        
-        <details>
-          <summary>Schema</summary>
-          <pre><code class="language-json" v-html="highlightCode(JSON.stringify(tool.inputSchema, null, 2))"></code></pre>
-        </details>
-        
-        <button 
-          @click="testTool(tool)" 
-          class="button"
-          style="margin-top: 10px;"
-        >
-          Test Tool
-        </button>
+    <div v-else class="flex border border-gray-300 rounded-lg overflow-hidden bg-white" style="height: calc(100vh - 120px);">
+      <!-- Column 1: Tools List -->
+      <div class="flex flex-col border-r border-gray-300 w-75 min-w-60">
+        <div class="flex justify-between items-center px-5 py-4 bg-gray-50 border-b border-gray-300 font-semibold">
+          <h3 class="m-0 text-base text-gray-800">Tools</h3>
+          <span class="bg-blue-500 text-white px-2 py-0.5 rounded-xl text-xs font-medium">{{ mcpStore.tools.length }}</span>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+          <div 
+            v-for="tool in mcpStore.tools" 
+            :key="tool.name"
+            class="px-5 py-3 border-b border-gray-100 cursor-pointer transition-colors duration-200 hover:bg-gray-50"
+            :class="{ 'bg-blue-50 border-r-4 border-r-blue-500': selectedTool?.name === tool.name }"
+            @click="selectTool(tool)"
+          >
+            <div class="font-mono font-semibold text-gray-800 text-sm">{{ tool.name }}</div>
+            <div class="text-xs text-gray-600 mt-1 leading-tight" v-if="tool.description">{{ tool.description }}</div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Tool Test Modal -->
-    <div v-if="selectedTool" class="modal-overlay" @click="closeModal">
-      <div class="modal" @click.stop>
-        <h3>Test {{ selectedTool.name }}</h3>
-        <p v-if="selectedTool.description">{{ selectedTool.description }}</p>
-        
-        <div class="form-group">
-          <label>Arguments (JSON):</label>
-          <textarea 
-            v-model="toolArgs" 
-            class="textarea"
-            placeholder='{"arg1": "value1", "arg2": "value2"}'
-          ></textarea>
+      <!-- Column 2: Schema & Input -->
+      <div class="flex flex-col border-r border-gray-300 flex-1 min-w-96">
+        <div class="flex justify-between items-center px-5 py-4 bg-gray-50 border-b border-gray-300 font-semibold">
+          <h3 class="m-0 text-base text-gray-800">{{ selectedTool ? selectedTool.name : 'Select a tool' }}</h3>
         </div>
+        <div v-if="selectedTool" class="flex-1 p-5 overflow-y-auto">
+          <h4 class="m-0 mb-2.5 text-sm font-semibold text-gray-800 uppercase tracking-wide">Description</h4>
+          <div class="text-gray-600 mb-5 p-3 bg-gray-50 rounded-md border border-gray-200" v-if="selectedTool.description">
+            {{ selectedTool.description }}
+          </div>
+          
+          <div class="mb-6">
+            <h4 class="m-0 mb-2.5 text-sm font-semibold text-gray-800 uppercase tracking-wide">Schema</h4>
+            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs overflow-x-auto max-h-72 overflow-y-auto"><code class="language-json" v-html="highlightCode(JSON.stringify(selectedTool.inputSchema, null, 2))"></code></pre>
+          </div>
 
-        <div class="form-group">
-          <button @click="executeTool" class="button" :disabled="isExecuting">
-            {{ isExecuting ? 'Executing...' : 'Execute' }}
-          </button>
-          <button @click="closeModal" class="button" style="margin-left: 10px; background: #6c757d;">
-            Cancel
-          </button>
+          <div class="mb-6">
+            <h4 class="m-0 mb-2.5 text-sm font-semibold text-gray-800 uppercase tracking-wide">Request Body</h4>
+            <textarea 
+              v-model="toolArgs" 
+              class="w-full min-h-30 p-4 border border-gray-300 rounded-md font-mono text-sm resize-y bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              placeholder='{"parameter": "value"}'
+            ></textarea>
+            
+            <div class="mt-4">
+              <button 
+                @click="executeTool" 
+                class="bg-blue-500 text-white border-0 px-6 py-2.5 rounded-md font-semibold cursor-pointer transition-colors duration-200 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
+                :disabled="isExecuting"
+              >
+                {{ isExecuting ? 'Executing...' : 'Send' }}
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div v-if="toolResult" class="tool-result">
-          <h4>Result:</h4>
-          <pre><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
+        <div v-else class="flex-1 flex items-center justify-center text-gray-600 italic text-center p-10">
+          Select a tool from the left panel to view its schema and test it
         </div>
+      </div>
 
-        <div v-if="toolError" class="error">
-          {{ toolError }}
+      <!-- Column 3: Response -->
+      <div class="flex flex-col w-96 min-w-80">
+        <div class="flex justify-between items-center px-5 py-4 bg-gray-50 border-b border-gray-300 font-semibold">
+          <h3 class="m-0 text-base text-gray-800">Response</h3>
+          <span v-if="responseTime" class="bg-green-500 text-white px-2 py-0.5 rounded-xl text-xs font-medium">{{ responseTime }}ms</span>
+        </div>
+        <div class="flex-1 p-5 overflow-y-auto">
+          <div v-if="toolResult" class="h-full">
+            <div class="px-3 py-1.5 rounded text-xs font-semibold mb-4 inline-block bg-green-100 text-green-800 border border-green-200">200 OK</div>
+            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs overflow-auto" style="height: calc(100% - 50px);"><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
+          </div>
+
+          <div v-else-if="toolError" class="h-full">
+            <div class="px-3 py-1.5 rounded text-xs font-semibold mb-4 inline-block bg-red-100 text-red-800 border border-red-200">Error</div>
+            <div class="bg-red-50 border border-red-200 rounded-md p-4 text-red-800 font-mono text-sm">{{ toolError }}</div>
+          </div>
+
+          <div v-else-if="!selectedTool" class="flex-1 flex items-center justify-center text-gray-600 italic text-center p-10">
+            Select a tool and execute it to see the response
+          </div>
+
+          <div v-else class="flex-1 flex items-center justify-center text-gray-600 italic text-center p-10">
+            Click "Send" to execute the tool
+          </div>
         </div>
       </div>
     </div>
@@ -86,19 +116,14 @@ const toolArgs = ref('')
 const toolResult = ref<any>(null)
 const toolError = ref<string | null>(null)
 const isExecuting = ref(false)
+const responseTime = ref<number | null>(null)
 
-function testTool(tool: McpTool) {
+function selectTool(tool: McpTool) {
   selectedTool.value = tool
   toolArgs.value = ''
   toolResult.value = null
   toolError.value = null
-}
-
-function closeModal() {
-  selectedTool.value = null
-  toolArgs.value = ''
-  toolResult.value = null
-  toolError.value = null
+  responseTime.value = null
 }
 
 async function executeTool() {
@@ -107,6 +132,9 @@ async function executeTool() {
   isExecuting.value = true
   toolError.value = null
   toolResult.value = null
+  responseTime.value = null
+  
+  const startTime = performance.now()
   
   try {
     const args = toolArgs.value.trim() ? JSON.parse(toolArgs.value) : {}
@@ -116,77 +144,35 @@ async function executeTool() {
       ? await callToolMock(selectedTool.value.name, args)
       : await callTool(selectedTool.value.name, args)
     toolResult.value = result
+    responseTime.value = Math.round(performance.now() - startTime)
   } catch (error) {
     toolError.value = error instanceof Error ? error.message : 'Unknown error'
+    responseTime.value = Math.round(performance.now() - startTime)
   } finally {
     isExecuting.value = false
+  }
+}
+
+// Mock function for development mode (if not already defined)
+async function callToolMock(toolName: string, args: any) {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000))
+  return {
+    mock: true,
+    tool: toolName,
+    args,
+    timestamp: new Date().toISOString()
   }
 }
 </script>
 
 <style scoped>
-.tools-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+/* Custom widths not available in default Tailwind */
+.w-75 {
+  width: 300px;
 }
 
-.tool-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  background: #f9f9f9;
-}
-
-.tool-card h3 {
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.tool-card details {
-  margin: 10px 0;
-}
-
-.tool-card pre {
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  overflow-x: auto;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.tool-result {
-  margin-top: 15px;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 4px;
-}
-
-.tool-result pre {
-  margin: 0;
-  font-size: 12px;
+.min-h-30 {
+  min-height: 120px;
 }
 </style>
