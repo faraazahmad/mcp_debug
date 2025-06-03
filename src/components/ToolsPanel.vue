@@ -1,7 +1,5 @@
 <template>
   <div class="h-full flex flex-col">
-    <h2 class="m-0 mb-5 px-5 text-2xl text-gray-800">MCP Tools Explorer</h2>
-    
     <div v-if="!mcpStore.hasTools && mcpStore.isConnected" class="text-center py-10 text-gray-600 text-base">
       No tools available
     </div>
