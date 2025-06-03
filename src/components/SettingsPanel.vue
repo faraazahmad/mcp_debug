@@ -35,7 +35,7 @@
         <button class="bg-slate-100 hover:bg-slate-200 border border-slate-400 disabled:bg-gray-400 disabled:cursor-not-allowed text-slate-700 px-6 py-2 rounded-md transition-colors" @click="addEnvVar" type="button">+ Add</button>
         
       </div>
-      <div class="border border-gray-300 rounded-md p-4 bg-gray-50 max-h-70 overflow-y-auto">
+      <div class="border border-gray-300 rounded-md p-4 bg-gray-50 max-h-50 overflow-y-auto">
         <div class="flex flex-col md:flex-row gap-2 mb-2 items-center" v-for="(key, index) in envVarKeys" :key="index">
           <input
             class="font-mono flex-1 min-w-0 md:min-w-[150px] px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
