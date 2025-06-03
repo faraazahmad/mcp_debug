@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="p-6 bg-white h-full flex flex-col">
     <h2>Available Resources</h2>
     
     <div v-if="!mcpStore.hasResources && mcpStore.isConnected">

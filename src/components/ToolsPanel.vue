@@ -1,7 +1,5 @@
 <template>
   <div class="h-full flex flex-col">
-    <h2 class="m-0 mb-5 px-5 text-2xl text-gray-800">MCP Tools Explorer</h2>
-    
     <div v-if="!mcpStore.hasTools && mcpStore.isConnected" class="text-center py-10 text-gray-600 text-base">
       No tools available
     </div>
@@ -10,7 +8,7 @@
       Connect to MCP server to see available tools
     </div>
 
-    <div v-else class="flex border border-gray-300 rounded-lg overflow-hidden bg-white" style="height: calc(100vh - 120px);">
+    <div v-else class="flex overflow-hidden bg-white h-full">
       <!-- Column 1: Tools List -->
       <div class="flex flex-col border-r border-gray-300 w-75 min-w-60">
         <div class="flex justify-between items-center px-5 py-4 bg-gray-50 border-b border-gray-300 font-semibold">
@@ -49,13 +47,18 @@
 
           <div class="mb-6">
             <h4 class="m-0 mb-2.5 text-sm font-semibold text-gray-800 uppercase tracking-wide">Request Body</h4>
-            <textarea 
-              v-model="toolArgs" 
-              class="w-full min-h-30 p-4 border border-gray-300 rounded-md font-mono text-sm resize-y bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              placeholder='{"parameter": "value"}'
-            ></textarea>
+            <div 
+              ref="editorContainer" 
+              class="w-full h-40 border border-gray-300 rounded-md bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 monaco-editor-container"
+            ></div>
             
-            <div class="mt-4">
+            <div class="mt-4 flex gap-3">
+              <button 
+                @click="generateRequestBody" 
+                class="bg-gray-500 text-white border-0 px-4 py-2.5 rounded-md font-semibold cursor-pointer transition-colors duration-200 hover:bg-gray-600"
+              >
+                Generate
+              </button>
               <button 
                 @click="executeTool" 
                 class="bg-blue-500 text-white border-0 px-6 py-2.5 rounded-md font-semibold cursor-pointer transition-colors duration-200 hover:bg-blue-600 disabled:bg-gray-500 disabled:cursor-not-allowed"
@@ -79,8 +82,7 @@
         </div>
         <div class="flex-1 p-5 overflow-y-auto">
           <div v-if="toolResult" class="h-full">
-            <div class="px-3 py-1.5 rounded text-xs font-semibold mb-4 inline-block bg-green-100 text-green-800 border border-green-200">200 OK</div>
-            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs overflow-auto" style="height: calc(100% - 50px);"><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
+            <pre class="bg-gray-50 border border-gray-300 rounded-md p-4 text-xs text-wrap overflow-y-auto h-full"><code class="language-json" v-html="highlightCode(JSON.stringify(toolResult, null, 2))"></code></pre>
           </div>
 
           <div v-else-if="toolError" class="h-full">
@@ -102,11 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useMcpStore } from '../stores/mcp'
 import { callTool } from '../services/mcpClient'
 import type { McpTool } from '../types'
 import { useHighlight } from '../composables/useHighlight'
+import * as monaco from 'monaco-editor'
 
 const mcpStore = useMcpStore()
 const { highlightCode } = useHighlight()
@@ -117,6 +120,38 @@ const toolResult = ref<any>(null)
 const toolError = ref<string | null>(null)
 const isExecuting = ref(false)
 const responseTime = ref<number | null>(null)
+const editorContainer = ref<HTMLElement>()
+let editor: monaco.editor.IStandaloneCodeEditor | null = null
+
+async function initializeEditor() {
+  if (!editorContainer.value || editor) return
+  
+  await nextTick()
+  try {
+    editor = monaco.editor.create(editorContainer.value, {
+      value: '',
+      language: 'json',
+      theme: 'vs',
+      automaticLayout: true,
+      minimap: { enabled: false },
+      fontSize: 13,
+      lineNumbers: 'on',
+      wordWrap: 'on',
+      formatOnPaste: true,
+      formatOnType: true,
+      scrollBeyondLastLine: false,
+      fixedOverflowWidgets: true
+    })
+    
+    editor.onDidChangeModelContent(() => {
+      toolArgs.value = editor?.getValue() || ''
+    })
+    
+    console.log('Monaco editor initialized successfully')
+  } catch (error) {
+    console.error('Failed to initialize Monaco editor:', error)
+  }
+}
 
 function selectTool(tool: McpTool) {
   selectedTool.value = tool
@@ -124,6 +159,72 @@ function selectTool(tool: McpTool) {
   toolResult.value = null
   toolError.value = null
   responseTime.value = null
+  if (editor) {
+    editor.setValue('')
+  }
+}
+
+// Watch for when a tool is selected and initialize editor
+watch(selectedTool, async (newTool) => {
+  if (newTool && !editor) {
+    await nextTick()
+    await initializeEditor()
+  }
+})
+
+function generateRequestBody() {
+  if (!selectedTool.value?.inputSchema) return
+  
+  const schema = selectedTool.value.inputSchema
+  const example = generateExampleFromSchema(schema)
+  const formattedJson = JSON.stringify(example, null, 2)
+  toolArgs.value = formattedJson
+  if (editor) {
+    editor.setValue(formattedJson)
+  }
+}
+
+function generateExampleFromSchema(schema: any): any {
+  if (!schema || typeof schema !== 'object') return {}
+  
+  if (schema.type === 'object' && schema.properties) {
+    const example: any = {}
+    for (const [key, prop] of Object.entries(schema.properties as any)) {
+      example[key] = generateExampleFromProperty(prop)
+    }
+    return example
+  }
+  
+  return generateExampleFromProperty(schema)
+}
+
+function generateExampleFromProperty(prop: any): any {
+  if (!prop || typeof prop !== 'object') return ''
+  
+  switch (prop.type) {
+    case 'string':
+      return prop.example || prop.default || 'example'
+    case 'number':
+      return prop.example || prop.default || 42
+    case 'integer':
+      return prop.example || prop.default || 1
+    case 'boolean':
+      return prop.example !== undefined ? prop.example : (prop.default !== undefined ? prop.default : true)
+    case 'array':
+      const itemExample = prop.items ? generateExampleFromProperty(prop.items) : 'item'
+      return [itemExample]
+    case 'object':
+      if (prop.properties) {
+        const example: any = {}
+        for (const [key, subProp] of Object.entries(prop.properties)) {
+          example[key] = generateExampleFromProperty(subProp)
+        }
+        return example
+      }
+      return {}
+    default:
+      return prop.example || prop.default || ''
+  }
 }
 
 async function executeTool() {
@@ -137,7 +238,8 @@ async function executeTool() {
   const startTime = performance.now()
   
   try {
-    const args = toolArgs.value.trim() ? JSON.parse(toolArgs.value) : {}
+    const editorValue = editor?.getValue() || toolArgs.value
+    const args = editorValue.trim() ? JSON.parse(editorValue) : {}
     const isDevelopmentMode = localStorage.getItem('mcpDevelopmentMode') === 'true'
     
     const result = isDevelopmentMode 
@@ -152,6 +254,14 @@ async function executeTool() {
     isExecuting.value = false
   }
 }
+
+onMounted(() => {
+  // Editor will be initialized when a tool is selected
+})
+
+onUnmounted(() => {
+  editor?.dispose()
+})
 
 // Mock function for development mode (if not already defined)
 async function callToolMock(toolName: string, args: any) {
@@ -174,5 +284,14 @@ async function callToolMock(toolName: string, args: any) {
 
 .min-h-30 {
   min-height: 120px;
+}
+
+.monaco-editor-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.monaco-editor-container :deep(.monaco-editor) {
+  height: 100% !important;
 }
 </style>
